@@ -1,4 +1,4 @@
-# PHP Goblin Hunter
+# PHP Smasher
 
 Backend powered by [ReachPHP](http://reactphp.org/) and [Ratchet](http://socketo.me/).
 
