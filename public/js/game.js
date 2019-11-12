@@ -263,10 +263,22 @@ function renderHero(hero) {
 
 var renderPoints = function(){
 	var points = document.getElementById("points");
+	var sorted = Object.entries(heros).sort(function (a, b) {
+		if(a[1].points()==b[1].points()) {
+			return 0;
+		}
+
+		return a[1].points() > b[1].points() ? -1 : 1;
+	});
+
 	points.innerHTML = "";
-	for(var i in heros) {
-		if (heros[i].ready()) {
-			points.innerHTML += heros[i].playerName() + ": " + heros[i].points() + "<br />";
+	for(var i in sorted) {
+		if (sorted[i][1].ready()) {
+			if(sorted[i][1].id() == myHero.id()) {
+				points.innerHTML += "<strong>" + sorted[i][1].playerName() + ": " + sorted[i][1].points() + "</strong><br />";
+			} else {
+				points.innerHTML += sorted[i][1].playerName() + ": " + sorted[i][1].points() + "<br />";
+			}
 		}
 	}
 };

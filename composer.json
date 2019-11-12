@@ -1,23 +1,22 @@
 {
-    "name": "itcraftsmanpl/php-smasher",
+    "name": "akondas/php-smasher",
     "type": "project",
     "description": "PHP Smasher - simple multiplayer game powered by ReactPHP",
-    "license": "MIT",
-    "keywords": ["php", "game", "reactphp"],
+    "keywords": [
+        "php",
+        "game",
+        "reactphp"
+    ],
     "homepage": "https://github.com/akondas/php-smasher",
+    "license": "MIT",
     "authors": [
         {
             "name": "Arkadiusz Kondas",
             "email": "arkadiusz.kondas@gmail.com"
         }
     ],
-    "autoload": {
-        "psr-4": {
-            "Smasher\\": "src/"
-        }
-    },
     "require": {
-        "php": ">=7.0.0",
+        "php": ">=7.2",
         "cboden/ratchet": "^0.3.6",
         "gabrielbull/websocket-client": "dev-master"
     },
@@ -26,5 +25,10 @@
     },
     "config": {
         "bin-dir": "bin"
+    },
+    "autoload": {
+        "psr-4": {
+            "Smasher\\": "src/"
+        }
     }
 }
