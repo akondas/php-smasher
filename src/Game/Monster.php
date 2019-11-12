@@ -17,8 +17,8 @@ class Monster
     public function __construct()
     {
         $this->type = self::TYPES[random_int(0, count(self::TYPES) - 1)];
-        $this->x = random_int(10, 502);
-        $this->y = random_int(10, 470);
+        $this->x = random_int(20, 492);
+        $this->y = random_int(20, 460);
     }
 
     public function inCollisionWith($x, $y) : bool

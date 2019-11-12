@@ -20,11 +20,6 @@ class Server implements WampServerInterface
     protected $monster;
 
     /**
-     * @var int
-     */
-    private $playersCount;
-
-    /**
      * @var array
      */
     private $connections;
@@ -32,7 +27,7 @@ class Server implements WampServerInterface
     public function __construct()
     {
         $this->monster = new Monster();
-        $this->playersCount = 0;
+        $this->connections = [];
     }
 
     public function onSubscribe(ConnectionInterface $conn, $topic)
@@ -45,7 +40,6 @@ class Server implements WampServerInterface
 
     public function onOpen(ConnectionInterface $conn)
     {
-        $this->playersCount++;
         $this->connections[$conn->WAMP->sessionId] = $conn;
     }
 
@@ -55,7 +49,6 @@ class Server implements WampServerInterface
         if (isset($this->playerData[$sessid])) {
             unset($this->playerData[$sessid]);
         }
-        $this->playersCount--;
         unset($this->connections[$conn->WAMP->sessionId]);
     }
 
@@ -114,6 +107,6 @@ class Server implements WampServerInterface
 
     public function getPlayersCount()
     {
-        return $this->playersCount;
+        return count($this->connections);
     }
 }

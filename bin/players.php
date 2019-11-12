@@ -5,7 +5,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use WebSocketClient\WebSocketClient;
 use Smasher\Game\FakePlayer;
 
-$playersLimit = isset($argv[1]) ? (int) $argv[1] : 1000;
+$playersLimit = isset($argv[1]) ? (int) $argv[1] : 100;
 /** @var FakePlayer[] $players */
 $players = [];
 $loop = React\EventLoop\Factory::create();
@@ -17,7 +17,7 @@ $loop->addPeriodicTimer(0, function () use ($loop, &$players, $playersLimit) {
     }
 });
 
-$loop->addPeriodicTimer(0.1, function () use (&$players) {
+$loop->addPeriodicTimer(0.2, function () use (&$players) {
     foreach ($players as $player) {
         $player->move();
     }
