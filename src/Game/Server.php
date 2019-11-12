@@ -10,17 +10,17 @@ use Ratchet\Wamp\WampServerInterface;
 class Server implements WampServerInterface
 {
     /**
-     * @var array
+     * @var array[]
      */
-    protected $playerData = [];
+    private $playerData = [];
 
     /**
      * @var Monster
      */
-    protected $monster;
+    private $monster;
 
     /**
-     * @var array
+     * @var ConnectionInterface[]
      */
     private $connections;
 
@@ -45,9 +45,9 @@ class Server implements WampServerInterface
 
     public function onClose(ConnectionInterface $conn)
     {
-        $sessid = $conn->WAMP->sessionId;
-        if (isset($this->playerData[$sessid])) {
-            unset($this->playerData[$sessid]);
+        $sessId = $conn->WAMP->sessionId;
+        if (isset($this->playerData[$sessId])) {
+            unset($this->playerData[$sessId]);
         }
         unset($this->connections[$conn->WAMP->sessionId]);
     }
@@ -65,24 +65,30 @@ class Server implements WampServerInterface
 
     public function onPublish(ConnectionInterface $conn, $topic, $event, array $exclude, array $eligible)
     {
-        $sessid = $conn->WAMP->sessionId;
+        $sessId = $conn->WAMP->sessionId;
         switch ($topic->getId()) {
             case "char_remove":
-                if (isset($this->playerData[$sessid])) {
-                    unset($this->playerData[$sessid]);
+                if (isset($this->playerData[$sessId])) {
+                    unset($this->playerData[$sessId]);
                 }
 
                 break;
 
             case "char_add":
+                $this->playerData[$sessId] = [
+                    'points' => 0,
+                    'lastMove' => null
+                ];
                 break;
 
             case "char_move":
-                $this->playerData[$sessid] = $event;
+                $this->playerData[$sessId]['lastMove'] = $event;
                 if ($this->monster->inCollisionWith($event['x'], $event['y'])) {
+                    $this->playerData[$sessId]['points']++;
                     $this->monster = new Monster();
                     foreach ($this->connections as $connection) {
                         $connection->event('monster_add', $this->monster->toArray());
+                        $connection->event('add_point', ['id' => $event['id']]);
                     }
                 }
                 break;
@@ -90,7 +96,7 @@ class Server implements WampServerInterface
             case "char_msg":
                 if ($event['msg'][0] == "/") {
                     $event['heroType'] = substr($event['msg'], 1);
-                    $this->playerData[$sessid]['heroType'] = $event['heroType'];
+                    $this->playerData[$sessId]['lastMove']['heroType'] = $event['heroType'];
                     $event['msg'] = "";
                     break;
                 }

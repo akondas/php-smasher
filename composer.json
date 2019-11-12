@@ -4,7 +4,7 @@
     "description": "PHP Smasher - simple multiplayer game powered by ReactPHP",
     "license": "MIT",
     "keywords": ["php", "game", "reactphp"],
-    "homepage": "https://github.com/itcraftsmanpl/php-smasher",
+    "homepage": "https://github.com/akondas/php-smasher",
     "authors": [
         {
             "name": "Arkadiusz Kondas",

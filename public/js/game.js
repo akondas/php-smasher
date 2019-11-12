@@ -42,7 +42,7 @@ var spritePaths = {
 	go: 'images/go.png',
 	java : 'images/java.png',
 	javascript : 'images/javascript.png'
-}
+};
 
 var sprite = function(name, path) {
 	var that = this;
@@ -52,9 +52,10 @@ var sprite = function(name, path) {
 	this._ready = false;
 	this._image.onload = function(img) {
 		that._ready = true;
-	}
+	};
 	this._image.src = path;
-}
+};
+
 sprite.prototype = {
 	width: function() {
 		return this._image.width;
@@ -68,7 +69,8 @@ sprite.prototype = {
 	ready: function() {
 		return this._ready;
 	}
-}
+};
+
 
 var spriteCollection = {};
 for(var i in spritePaths) {
@@ -78,12 +80,11 @@ for(var i in spritePaths) {
 
 var hero = function(heroType) {
 	this._type = heroType || "hero";
-	this.heroId ;
-	this._ready = false;
 	this._x = this._y = 0;
 	this._speed = 256 //in pixels per second
 	this._msg = '';
 	this._timer = false;
+	this._points = 0;
 };
 
 hero.prototype = {
@@ -93,8 +94,23 @@ hero.prototype = {
 	setId: function(id) {
 		this.heroId = id;
 	},
+	playerName: function() {
+		return this._playerName;
+	},
+	setPlayerName: function(playerName) {
+		this._playerName = playerName;
+	},
 	type: function() {
 		return this._type;
+	},
+	points: function() {
+		return this._points;
+	},
+	addPoint: function() {
+		this._points++;
+	},
+	setPoints: function(points) {
+		this._points = points;
 	},
 	setType: function(heroType) {
 		if(spriteCollection[heroType] !== undefined) {
@@ -147,7 +163,7 @@ hero.prototype = {
 		return this._msg;
 	},
 	serialize: function() {
-		return { id: this.heroId, y: this._y, x: this._x, heroType: this._type };
+		return { id: this.heroId, y: this._y, x: this._x, heroType: this._type, playerName: this._playerName };
 	}
 };
 
@@ -171,7 +187,7 @@ addEventListener("keyup", function (e) {
 var update = function (modifier) {
 	var x, y = 0;
 	var domove = false;
-	if (38 in keysDown) { // Player holding up		
+	if (38 in keysDown) { // Player holding up
 		y = myHero.y() - myHero.speed() * modifier;
 		if(y <= 0) {
 			return;
@@ -185,7 +201,7 @@ var update = function (modifier) {
 		y = myHero.y() + myHero.speed() * modifier;
 		if(y+32 >= canvas.height) {
 			return;
-		}		
+		}
 		myHero.moveY(y)
 		// x = myHero.x;
 		domove = true;
@@ -194,7 +210,7 @@ var update = function (modifier) {
 		x = myHero.x() - myHero.speed() * modifier;
 		if(x <= 0) {
 			return;
-		}		
+		}
 		myHero.moveX(x)
 		domove = true;
 	}
@@ -202,7 +218,7 @@ var update = function (modifier) {
 		x = myHero.x() + myHero.speed() * modifier;
 		if(x+32 >= canvas.width ) {
 			return;
-		}		
+		}
 
 		myHero.moveX(x)
 		// y = myHero.y;
@@ -226,21 +242,32 @@ var render = function () {
 			if(heros[i] === myHero) {
 				continue;
 			}
-			ctx.drawImage(heros[i].sprite().image(), heros[i].x(), heros[i].y(), 50, 50);
-			if(heros[i].said() != '') {
-				ctx.fillText(heros[i].said(), heros[i].x() + (50 / 2), heros[i].y() - 10);
-			}
-		}		
+			renderHero(heros[i]);
+		}
 	}
 	// little hack to make sure we stay on top of everyone else
-
-	ctx.drawImage(myHero.sprite().image(), myHero.x(), myHero.y(), 50, 50);
-	if(myHero.said() != '') {
-		ctx.fillText(myHero.said(), myHero.x() + (50 / 2), myHero.y() - 10);
-	}
+	renderHero(myHero);
 
 	if (monster.hasOwnProperty('type')) {
         ctx.drawImage(spriteCollection[monster.type].image(), monster.x, monster.y, 32, 32);
+	}
+};
+
+function renderHero(hero) {
+	ctx.drawImage(hero.sprite().image(), hero.x(), hero.y(), 50, 50);
+	ctx.fillText(hero.playerName(), hero.x(), hero.y() + 55);
+	if(hero.said() != '') {
+		ctx.fillText(hero.said(), hero.x() + (50 / 2), hero.y() - 10);
+	}
+};
+
+var renderPoints = function(){
+	var points = document.getElementById("points");
+	points.innerHTML = "";
+	for(var i in heros) {
+		if (heros[i].ready()) {
+			points.innerHTML += heros[i].playerName() + ": " + heros[i].points() + "<br />";
+		}
 	}
 };
 
@@ -264,78 +291,12 @@ requestAnimationFrame = w.requestAnimationFrame || w.webkitRequestAnimationFrame
 
 // Let's play this game!
 var then = Date.now();
-
-
-var conn = new ab.Session('ws://localhost:8181',
-	function() {
-		conn.subscribe('char_move', function(topic, data){
-			if(heros[data.id] !== undefined) {
-				heros[data.id].moveX(parseFloat(data.x));
-				heros[data.id].moveY(parseFloat(data.y));
-			}
-		});
-
-		conn.subscribe('char_msg', function(topic, data){
-			if(heros[data.id] !== undefined) {				
-				heros[data.id].say(data.msg);
-				if(data['heroType'] !== undefined) {
-					heros[data.id].setType(data['heroType']);
-				}
-			}
-		});
-
-		conn.subscribe('char_add', function(topic, data){
-
-			var newHero = new hero();
-			newHero.moveX(parseFloat(data.x));
-			newHero.moveY(parseFloat(data.y));
-			newHero.setId(data.id);
-			heros[data.id] = newHero;
-		});
-
-		conn.subscribe('char_remove', function(topic, data){
-			if(heros[data.id] !== undefined) {
-				delete heros[data.id];
-			}
-		});
-
-		conn.subscribe('monster_add', function (topic, data) {
-			monster = data;
-        });
-
-		myHero.reset(canvas.width, canvas.height);
-		myHero.setId(guid());
-		heros[myHero.id()] = myHero;
-
-		main();
-		
-		conn.publish('char_add', myHero.serialize(), true);
-		conn.call('synchronize').then(function(data) {
-			var players = data.players;
-			for(var i in players) {
-				if(players[i].id === myHero.id()) {
-					continue;
-				}
-
-				var newHero = new hero();
-				newHero.moveX(parseFloat(players[i].x));
-				newHero.moveY(parseFloat(players[i].y));
-				newHero.setId(players[i].id);
-				newHero.setType(players[i].heroType);
-				heros[players[i].id] = newHero;
-			}
-			console.log(data);
-			monster = data.monster;
-		});
-	},
-	function() {
-		console.warn('WebSocket connection closed');
-	},
-	{'skipSubprotocolCheck': true}
-);
+var conn;
 
 window.onbeforeunload = function(){
-	conn.publish('char_remove', myHero.serialize(), true);
+	if(conn) {
+		conn.publish('char_remove', myHero.serialize(), true);
+	}
 };
 
 function sendMessage() {
@@ -343,7 +304,7 @@ function sendMessage() {
 	if(conn && message) {
 
 		conn.publish('char_msg', { id: myHero.id(), msg: message });
-		
+
 		myHero.setType(message.substring(1));
 		if(message[0] != "/") {
 			myHero.say(message);
@@ -352,3 +313,92 @@ function sendMessage() {
 	}
 }
 
+function startTheGame() {
+	var playerName = document.getElementById("playerName").value;
+	if(playerName.length<1) {
+		alert('Provide player name!');
+		return;
+	}
+	myHero.setPlayerName(playerName);
+
+	document.getElementById("start").style.display = 'none';
+	document.getElementById("game-wrapper").style.display = 'block';
+	conn = new ab.Session('ws://localhost:8181',
+		function() {
+			conn.subscribe('char_move', function(topic, data){
+				if(heros[data.id] !== undefined) {
+					heros[data.id].moveX(parseFloat(data.x));
+					heros[data.id].moveY(parseFloat(data.y));
+				}
+			});
+
+			conn.subscribe('char_msg', function(topic, data){
+				if(heros[data.id] !== undefined) {
+					heros[data.id].say(data.msg);
+					if(data['heroType'] !== undefined) {
+						heros[data.id].setType(data['heroType']);
+					}
+				}
+			});
+
+			conn.subscribe('char_add', function(topic, data){
+				var newHero = new hero();
+				newHero.moveX(parseFloat(data.x));
+				newHero.moveY(parseFloat(data.y));
+				newHero.setId(data.id);
+				newHero.setPlayerName(data.playerName);
+				heros[data.id] = newHero;
+			});
+
+			conn.subscribe('char_remove', function(topic, data){
+				if(heros[data.id] !== undefined) {
+					delete heros[data.id];
+				}
+			});
+
+			conn.subscribe('monster_add', function (topic, data) {
+				monster = data;
+			});
+
+			conn.subscribe('add_point', function(topic, data) {
+				if(heros[data.id] !== undefined) {
+					heros[data.id].addPoint();
+				}
+				renderPoints();
+			});
+
+			myHero.reset(canvas.width, canvas.height);
+			myHero.setId(guid());
+			heros[myHero.id()] = myHero;
+
+			main();
+
+			conn.publish('char_add', myHero.serialize(), true);
+			conn.call('synchronize').then(function(data) {
+				var players = data.players;
+				for(var i in players) {
+					var current = players[i].lastMove;
+					if(current == null || current.id === myHero.id()) {
+						continue;
+					}
+
+					var newHero = new hero();
+					newHero.moveX(parseFloat(current.x));
+					newHero.moveY(parseFloat(current.y));
+					newHero.setId(current.id);
+					newHero.setType(current.heroType);
+					newHero.setPoints(players[i].points);
+					newHero.setPlayerName(current.playerName);
+					heros[current.id] = newHero;
+				}
+
+				monster = data.monster;
+				renderPoints();
+			});
+		},
+		function() {
+			console.warn('WebSocket connection closed');
+		},
+		{'skipSubprotocolCheck': true}
+	);
+}
