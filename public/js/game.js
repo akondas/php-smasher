@@ -183,6 +183,16 @@ addEventListener("keyup", function (e) {
 	delete keysDown[e.keyCode];
 }, false);
 
+addEventListener("touchstart", function (e) {
+	if(e.touches.item(0) && e.touches.item(0).target.dataset.hasOwnProperty('key')) {
+		keysDown[e.touches.item(0).target.dataset.key] = true;
+	}
+}, false);
+
+addEventListener("touchend", function (e) {
+	keysDown = {};
+}, false);
+
 // Update game objects
 var update = function (modifier) {
 	var x, y = 0;
@@ -193,8 +203,7 @@ var update = function (modifier) {
 			return;
 		}
 
-		myHero.moveY(y)
-		// x = myHero.x;
+		myHero.moveY(y);
 		domove = true;
 	}
 	if (40 in keysDown) { // Player holding down
@@ -202,8 +211,7 @@ var update = function (modifier) {
 		if(y+32 >= canvas.height) {
 			return;
 		}
-		myHero.moveY(y)
-		// x = myHero.x;
+		myHero.moveY(y);
 		domove = true;
 	}
 	if (37 in keysDown) { // Player holding left
@@ -211,7 +219,7 @@ var update = function (modifier) {
 		if(x <= 0) {
 			return;
 		}
-		myHero.moveX(x)
+		myHero.moveX(x);
 		domove = true;
 	}
 	if (39 in keysDown) { // Player holding right
@@ -220,13 +228,11 @@ var update = function (modifier) {
 			return;
 		}
 
-		myHero.moveX(x)
-		// y = myHero.y;
+		myHero.moveX(x);
 		domove = true;
 	}
 
 	if(domove) {
-		// move(myHero, x, y);
 		conn.publish('char_move', myHero.serialize(), true);
 	}
 };
@@ -335,7 +341,7 @@ function startTheGame() {
 
 	document.getElementById("start").style.display = 'none';
 	document.getElementById("game-wrapper").style.display = 'block';
-	conn = new ab.Session('ws://localhost:8181',
+	conn = new ab.Session('ws://' + window.location.hostname + ':8181',
 		function() {
 			conn.subscribe('char_move', function(topic, data){
 				if(heros[data.id] !== undefined) {
@@ -413,4 +419,6 @@ function startTheGame() {
 		},
 		{'skipSubprotocolCheck': true}
 	);
+
+
 }
